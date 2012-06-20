@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- App -->
+    <string name="description_home">Home</string>
+    <string name="btn_idioma">Hizkuntza</string>
+    <string name="btn_more_info">Audiogidaren testua</string>
+    <string name="btn_qr">QR</string>
+    <string name="btn_salir">Irten</string>
+    <string name="title_idioma">Hizkuntza</string>
+    <string name="title_qr">QR</string>
+    <string name="app_name">LinkedQR</string>
+    <string name="title_salir">Irten</string>
+    <string name="bs_CANCEL_button">Ezeztatu</string>
+    <string name="bs_OK_button">Onartu</string>
+	<string name="bs_popup_message">Aplikazio hau erabili ahal izateko beharrezkoa da "Barcode Scanner" aplikazioa izatea. Posible da android Marketetik jeistea "Onartu" botoiari emanez gero edota aplikaziotik irtetzea "Ezeztatu" emanez gero.</string>
+	<string name="bs_popup_title">Ezin da Barcode Scanner aurkitu!</string>
+	<string name="qr_error">Ezin izan da informazioa berreskuratu. Jar zaitez aretoko pertsonalarekin harremanetan.</string>
+    
+    <!-- QR -->
+    <string name="audioguia">Audioguía</string>
+    <string name="play">Play</string>
+    <string name="stop">Stop</string>
+    <string name="pause">Pause</string>
+    
+    
+    <!-- Errores de perfil rellenado -->
+    <string name="errorPerfilRellenado"> Rellene el perfil</string> 
+</resources>
