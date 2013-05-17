@@ -30,7 +30,9 @@
             android:src="@drawable/ic_title_home" />
 
         <ImageView style="@style/TitleBarSeparator" />
-
+
+
+
         <TextView
             android:id="@id/title_text"
             android:layout_width="0dp"
@@ -49,7 +51,8 @@
         <ImageView style="@style/TitleBarSeparator" />
 
     </LinearLayout>
-
+
+
     <LinearLayout
         android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
@@ -62,7 +65,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" >
-
+
+
+
             <LinearLayout
                 android:id="@+id/headLinearLayout"
                 android:layout_width="match_parent"
@@ -70,7 +75,8 @@
                 android:orientation="vertical" >
 
             </LinearLayout>
-
+
+
             <LinearLayout
                 android:id="@+id/footerLinearLayout"
                 android:layout_width="match_parent"
@@ -86,7 +92,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
         </LinearLayout>
-
+
+
         <TextView
             android:id="@+id/guidetextView"
             android:layout_width="wrap_content"
@@ -94,14 +101,23 @@
             android:layout_gravity="center"
             android:text="@string/audioguia"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
+
+
+
+
         <LinearLayout
             android:id="@+id/linearLayout4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:gravity="center" >
-
+
+
+
+
+
+
+
             <ToggleButton
                 android:id="@+id/audioToggleButton"
                 android:layout_width="wrap_content"
@@ -110,7 +126,9 @@
                 android:text="ToggleButton"
                 android:textOff="@string/play"
                 android:textOn="@string/pause" />
-
+
+
+
             <Button
                 android:id="@+id/stopButton"
                 android:layout_width="wrap_content"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+	<prefixes>
+	    <prefixItem>
+	        <prefix>foaf</prefix>
+	        <uri>http://xmlns.com/foaf/0.1/</uri>
+	    </prefixItem>
+	    <prefixItem>
+	        <prefix>rel</prefix>
+	        <uri>http://purl.org/vocab/relationship/</uri>
+	    </prefixItem>
+	</prefixes>
+	<pageItem type="foaf:Person" class="eu.deustotech.internet.linkedqr.android.layout.Person">
+	    <items>
+		    <item widget="name">
+		        <name lang="es">Nombre</name>
+		        <name lang="en">Name</name>
+		        <property>foaf:name</property>
+		    </item>
+		    <item>
+		        <name lang="es">Correo electrónico</name>
+		        <name lang="en">E-mail</name>
+		        <property>foaf:mbox</property>
+		    </item>
+		    <separator/>
+		    <item linkable="true">
+		        <name lang="es">Compañeros de trabajo</name>
+		        <name lang="en">Workmates</name>
+		        <property>rel:worksWith</property>
+		    </item>
+	    </items>
+	</pageItem>
+</template>
