@@ -13,19 +13,13 @@
 	<pageItem type="foaf:Person" class="eu.deustotech.internet.linkedqr.android.layout.Person">
 	    <items>
 		    <item id="name">
-		        <name lang="es">Nombre</name>
-		        <name lang="en">Name</name>
 		        <property>foaf:name</property>
 		    </item>
 		    <item id="email">
-		        <name lang="es">Correo electrónico</name>
-		        <name lang="en">E-mail</name>
 		        <property>foaf:mbox</property>
 		    </item>
 		    <separator/>
 		    <item id="workmates" linkable="true">
-		        <name lang="es">Compañeros de trabajo</name>
-		        <name lang="en">Workmates</name>
 		        <property>rel:worksWith</property>
 		    </item>
 	    </items>

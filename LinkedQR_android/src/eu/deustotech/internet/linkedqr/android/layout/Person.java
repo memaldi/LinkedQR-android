@@ -19,6 +19,8 @@ public class Person implements Layout {
     public Map<String, Integer> getWidgets() {
         Map<String, Integer> widgetMap = new HashMap<String, Integer>();
         widgetMap.put("name", R.id.name);
+        widgetMap.put("email", R.id.email);
+        widgetMap.put("workmates", R.id.workmates);
 
         return widgetMap;
     }

@@ -1,20 +1,21 @@
 package eu.deustotech.internet.linkedqr.android.ui;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.logging.Logger;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
+import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+import eu.deustotech.internet.linkedqr.android.R;
 import eu.deustotech.internet.linkedqr.android.layout.Layout;
+import eu.deustotech.internet.linkedqr.android.util.QRUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -25,27 +26,21 @@ import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.rio.rdfxml.RDFXMLParser;
-import org.openrdf.rio.turtle.TurtleParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import eu.deustotech.internet.linkedqr.android.R;
-import eu.deustotech.internet.linkedqr.android.util.QRUtils;
-
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.Uri;
-import android.os.Bundle;
-import android.widget.Toast;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
@@ -228,20 +223,30 @@ public class QrActivity extends LinkedQRActivity {
 
             String type = "";
 
-            Map<String, Statement> predicateMap = new HashMap<String, Statement>();
+            Map<String, List<Statement>> predicateMap = new HashMap<String, List<Statement>>();
             for (Statement statement : statementCollection) {
-                predicateMap.put(statement.getPredicate().stringValue().replaceAll("\\u0000", ""), statement);
+                String predicate = statement.getPredicate().stringValue().replaceAll("\\u0000", "");
+                if (predicate.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+                    type = statement.getObject().stringValue().replaceAll("\\u0000", "");
+                } else {
+                    List<Statement> statementList = new ArrayList<Statement>();
+                    if (predicateMap.keySet().contains(predicate)) {
+                        statementList = predicateMap.get(predicate);
+                    }
+                    statementList.add(statement);
+                    predicateMap.put(predicate, statementList);
+                }
             }
 
-            if (templateID == null) {
+            /*if (templateID == null) {
                 type = predicateMap.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").getObject().stringValue().replaceAll("\\u0000", "");
-                /*for (Statement statement : statementCollection) {
+                for (Statement statement : statementCollection) {
                     if (statement.getPredicate().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
                         type = statement.getObject().stringValue().replaceAll("\\u0000", "");
                         break;
                     }
-                }*/
-            }
+                }
+            }*/
 
             String prefixedType = String.format("%s:%s", uri2prefixMap.get(getPrefix(type)), type.split(getPrefix(type))[1]);
 
@@ -264,7 +269,7 @@ public class QrActivity extends LinkedQRActivity {
 
 
             Map<String, String> propertyMap = new HashMap<String, String>();
-            Map<String, String> propertyLangMap = new HashMap<String, String>();
+            //Map<String, String> propertyLangMap = new HashMap<String, String>();
 
             NodeList pageNodeChildren = pageNode.getChildNodes();
             for (int i = 0; i < pageNodeChildren.getLength(); i++) {
@@ -276,23 +281,17 @@ public class QrActivity extends LinkedQRActivity {
                         NodeList itemNodeChildren = itemNode.getChildNodes();
                         if (itemNode.getNodeName().equals("item")) {
 
-                            String langName = "";
+                            //String langName = "";
                             String property = "";
                             String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();;
                             for (int k = 0; k < itemNodeChildren.getLength(); k++) {
                                 Node element = itemNodeChildren.item(k);
-                                if (element.getNodeName().equals("name")) {
-                                    String nodeLang = element.getAttributes().getNamedItem("lang").getNodeValue();
-                                    if (nodeLang.equals(lang)) {
-                                        langName = element.getFirstChild().getNodeValue();
-                                    }
-
-                                } else if (element.getNodeName().equals("property")) {
+                                if (element.getNodeName().equals("property")) {
                                     property = element.getFirstChild().getNodeValue();
                                 }
-                                if (!"".equals(property) && !"".equals(langName)) {
+                                if (!"".equals(property) && !"".equals(id)) {
                                     propertyMap.put(property, id);
-                                    propertyLangMap.put(id, langName);
+                                    //propertyLangMap.put(id, langName);
                                 }
 
                             }
@@ -316,25 +315,29 @@ public class QrActivity extends LinkedQRActivity {
                 if (predicateMap.keySet().contains(extendedProperty)) {
                     String id = propertyMap.get(property);
                     if(widgetMap.keySet().contains(id)) {
-                        Statement statement = predicateMap.get(extendedProperty);
-                        String object = statement.getObject().stringValue().replaceAll("\\u0000", "");
-                        String langProperty = propertyLangMap.get(id);
+                        List<Statement> statementList = predicateMap.get(extendedProperty);
+                        for (Statement statement : statementList) {
+                            // Mirar los literales con varios idiomas y eso weis
+                            String object = statement.getObject().stringValue().replaceAll("\\u0000", "");
+                            //String langProperty = propertyLangMap.get(id);
 
+                            // Aquí hay que mirar las condiciones de tipo y eso
+                            int viewID = widgetMap.get(id);
+                            Object view = findViewById(viewID);
 
-
-                        // Aquí hay que mirar las condiciones de tipo y eso
-                        int viewID = widgetMap.get(id);
-                        Object view = findViewById(viewID);
-
-                        if (view instanceof TextView) {
-                            TextView textView = (TextView) view;
-                            String template = textView.getText().toString();
-                            String text = String.format(template, langProperty , object);
-                            textView.setText(text);
+                            setView(object, view, null);
                         }
-
                     }
 
+                }
+            }
+
+            for (String key : widgetMap.keySet()) {
+                Integer widgetID = widgetMap.get(key);
+                View view = findViewById(widgetID);
+                if (ViewGroup.class.isAssignableFrom(view.getClass())) {
+                    ViewGroup viewGroup = (ViewGroup) view;
+                    viewGroup.removeView(viewGroup.getChildAt(0));
                 }
             }
 
@@ -362,6 +365,51 @@ public class QrActivity extends LinkedQRActivity {
             e.printStackTrace();
         }
 
+    }
+
+    private void setView(String object, Object view, Object originalView) {
+        if (view instanceof TextView) {
+            TextView textView = (TextView) view;
+            String template = "";
+            if (originalView == null) {
+                template = textView.getText().toString();
+            } else {
+                TextView originalTextView = (TextView) originalView;
+                template = originalTextView.getText().toString();
+            }
+            String text = String.format(template, object);
+            textView.setText(text);
+        } else if (view instanceof ViewGroup) {
+            ViewGroup layoutView = (ViewGroup) view;
+            View child = layoutView.getChildAt(0);
+            View childCopy = null;
+            try {
+                String childClassStr = child.getClass().getCanonicalName();
+                System.out.println(childClassStr);
+                Class childClass = Class.forName(child != null ? child.getClass().getCanonicalName() : null);
+                //childCopy = (TextView) childClass.newInstance();
+                Class[] constructorArgs = new Class[1];
+                constructorArgs[0] = Context.class;
+                Constructor constructor = childClass.getDeclaredConstructor(constructorArgs);
+                childCopy = (View) constructor.newInstance(this);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            setView(object, childCopy, child);
+            childCopy.setVisibility(View.VISIBLE);
+            childCopy.setLayoutParams(new ViewGroup.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)));
+            layoutView.addView(childCopy);
+
+
+        }
     }
 
     private String getPrefix(String URI) {
