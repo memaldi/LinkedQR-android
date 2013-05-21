@@ -56,9 +56,8 @@ public class QrActivity extends LinkedQRActivity {
 	private static final String BS_PACKAGE = "com.google.zxing.client.android";
 	private static final int QR_CODE_REQUEST_CODE = 5678;
 	private static final int MARKET_REQUEST_CODE = 4932;
-	
-	private String QRURI;
-	private static final String PREFS_NAME = "LanguagePreferences";
+
+    private static final String PREFS_NAME = "LanguagePreferences";
 	/**
 	 * The creation of QrActivity
 	 */
@@ -75,7 +74,7 @@ public class QrActivity extends LinkedQRActivity {
         if (getIntent().getBooleanExtra("getBarcode", false)) {
 		    getBarcodeScanner();
         } else {
-            applyTemplate(getIntent().getStringExtra("URI"),null);
+            applyTemplate(getIntent().getStringExtra("URI"));
         }
 
 	}
@@ -130,7 +129,7 @@ public class QrActivity extends LinkedQRActivity {
 	 * Android Market
 	 * 
 	 * @param requestCode
-	 *            The request code asigned to the requested intent
+	 *            The request code assigned to the requested intent
 	 * @param resultCode
 	 *            The code with the result of the execution of the intent
 	 * @param data
@@ -143,12 +142,12 @@ public class QrActivity extends LinkedQRActivity {
 			getBarcodeScanner();
 		} else if (requestCode == QR_CODE_REQUEST_CODE) {
 			if (resultCode == RESULT_OK) {
-		
-					this.QRURI = data.getStringExtra("SCAN_RESULT");
+
+                String QRURI = data.getStringExtra("SCAN_RESULT");
 					
 					try {
 
-						applyTemplate(this.QRURI, null);
+						applyTemplate(QRURI);
 					} catch (Exception e) {
 						e.printStackTrace();
 						
@@ -166,7 +165,7 @@ public class QrActivity extends LinkedQRActivity {
 		}
 	}
 	
-	private void applyTemplate(String URI, String templateID) {
+	private void applyTemplate(String URI) {
 		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder;
 		try {
@@ -202,58 +201,11 @@ public class QrActivity extends LinkedQRActivity {
                 }
             }
 
-            /*NodeList endpoints = doc.getElementsByTagName("endpoint");
-            String endpoint = endpoints.item(0).getFirstChild().getNodeValue();*/
-
-            /*NodeList queries = doc.getElementsByTagName("query");
-            String query = queries.item(0).getNodeValue().replace("%URI%", String.format("<%s>", URI));*/
-
-            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-            String lang = settings.getString("lang", "es");
-
-            //String typeQuery = String.format("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>  CONSTRUCT { <%s> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o } WHERE { <%s> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o } ", URI, URI);
-
-            HttpClient client = new DefaultHttpClient();
-            //HttpGet request = new HttpGet(String.format("%s?query=%s&output=xml", endpoint, URLEncoder.encode(typeQuery, "utf-8")));
-            HttpGet request = new HttpGet(URI);
-            request.addHeader("Accept", "application/rdf+xml");
-
-            HttpResponse response = client.execute(request);
-            InputStream inputStream = response.getEntity().getContent();
-
-            StatementCollector statementCollector = new StatementCollector();
-            RDFParser rdfParser = new RDFXMLParser();
-            rdfParser.setRDFHandler(statementCollector);
-            rdfParser.parse(inputStream, "http://linkedqr/");
-
-            Collection<Statement> statementCollection = statementCollector.getStatements();
+            Collection<Statement> statementCollection = getStatements(URI);
 
             List<String> typeList = new ArrayList<String>();
 
-            Map<String, List<Statement>> predicateMap = new HashMap<String, List<Statement>>();
-            for (Statement statement : statementCollection) {
-                String predicate = statement.getPredicate().stringValue().replaceAll("\\u0000", "");
-                if (predicate.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
-                    typeList.add(statement.getObject().stringValue().replaceAll("\\u0000", ""));
-                } else {
-                    List<Statement> statementList = new ArrayList<Statement>();
-                    if (predicateMap.keySet().contains(predicate)) {
-                        statementList = predicateMap.get(predicate);
-                    }
-                    statementList.add(statement);
-                    predicateMap.put(predicate, statementList);
-                }
-            }
-
-            /*if (templateID == null) {
-                type = predicateMap.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#type").getObject().stringValue().replaceAll("\\u0000", "");
-                for (Statement statement : statementCollection) {
-                    if (statement.getPredicate().toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
-                        type = statement.getObject().stringValue().replaceAll("\\u0000", "");
-                        break;
-                    }
-                }
-            }*/
+            Map<String, List<Statement>> predicateMap = getPredicateMap(statementCollection, typeList);
 
             List<String> prefixedTypeList = new ArrayList<String>();
 
@@ -278,96 +230,13 @@ public class QrActivity extends LinkedQRActivity {
                 }
             }
 
+            Map<String, Widget> propertyMap = getPropertyMap(pageNode);
 
-
-            Map<String, Widget> propertyMap = new HashMap<String, Widget>();
-            //Map<String, String> propertyLangMap = new HashMap<String, String>();
-
-            NodeList pageNodeChildren = pageNode.getChildNodes();
-            for (int i = 0; i < pageNodeChildren.getLength(); i++) {
-                Node node = pageNodeChildren.item(i);
-                if (node.getNodeName().equals("items")) {
-                    NodeList childNodes = node.getChildNodes();
-                    for (int j = 0; j < childNodes.getLength(); j++) {
-                        Node itemNode = childNodes.item(j);
-                        NodeList itemNodeChildren = itemNode.getChildNodes();
-                        if (itemNode.getNodeName().equals("item")) {
-
-                            //String langName = "";
-                            String property = "";
-                            String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();
-                            boolean linkable = false;
-                            if (itemNode.getAttributes().getNamedItem("linkable") != null) {
-                                linkable = Boolean.valueOf(itemNode.getAttributes().getNamedItem("linkable").getNodeValue());
-                            }
-
-                            boolean main = false;
-                            if (itemNode.getAttributes().getNamedItem("main") != null) {
-                                main = Boolean.valueOf(itemNode.getAttributes().getNamedItem("main").getNodeValue());
-                            }
-
-                            Widget widget = new Widget(id, linkable, main);
-                            for (int k = 0; k < itemNodeChildren.getLength(); k++) {
-                                Node element = itemNodeChildren.item(k);
-                                if (element.getNodeName().equals("property")) {
-                                    property = element.getFirstChild().getNodeValue();
-                                }
-                                if (!"".equals(property) && !"".equals(id)) {
-                                    propertyMap.put(property, widget);
-                                    //propertyLangMap.put(id, langName);
-                                }
-
-                            }
-                        }
-
-                    }
-                }
-            }
-
-            Class layoutClass = Class.forName(className);
-            Layout layout = (Layout) layoutClass.newInstance();
-
-            setContentView(layout.getLayout());
-
-            Map<String, Integer> widgetMap = layout.getWidgets();
-
-            for (String property : propertyMap.keySet()) {
-                String extendedProperty = prefix2uriMap.get(property.split(":")[0]) + property.split(":")[1];
-                if (predicateMap.keySet().contains(extendedProperty)) {
-                    Widget widget = propertyMap.get(property);
-                    String id = widget.getId();
-                    if(widgetMap.keySet().contains(id)) {
-                        List<Statement> statementList = predicateMap.get(extendedProperty);
-                        for (Statement statement : statementList) {
-                            // Mirar los literales con varios idiomas y eso weis
-                            String object = statement.getObject().stringValue().replaceAll("\\u0000", "");
-                            //String langProperty = propertyLangMap.get(id);
-
-                            // Aquí hay que mirar las condiciones de tipo y eso
-                            int viewID = widgetMap.get(id);
-                            Object view = findViewById(viewID);
-
-                            setView(object, view, null, widget);
-
-
-                        }
-                    }
-                }
-            }
-
-            for (String key : widgetMap.keySet()) {
-                Integer widgetID = widgetMap.get(key);
-                View view = findViewById(widgetID);
-                if (ViewGroup.class.isAssignableFrom(view.getClass())) {
-                    ViewGroup viewGroup = (ViewGroup) view;
-                    viewGroup.removeView(viewGroup.getChildAt(0));
-                }
-            }
+           setLayout(prefix2uriMap, predicateMap, className, propertyMap);
 
 
 
-
-		} catch (ParserConfigurationException e) {
+        } catch (ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SAXException e) {
@@ -390,6 +259,133 @@ public class QrActivity extends LinkedQRActivity {
 
     }
 
+    private void clearLayouts(Map<String, Integer> widgetMap) {
+        for (String key : widgetMap.keySet()) {
+            Integer widgetID = widgetMap.get(key);
+            View view = findViewById(widgetID);
+            if (ViewGroup.class.isAssignableFrom(view.getClass())) {
+                ViewGroup viewGroup = (ViewGroup) view;
+                viewGroup.removeView(viewGroup.getChildAt(0));
+            }
+        }
+    }
+
+    private void setLayout(Map<String, String> prefix2uriMap, Map<String, List<Statement>> predicateMap, String className, Map<String, Widget> propertyMap) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        Class<Layout> layoutClass = (Class<Layout>) Class.forName(className);
+        Layout layout = layoutClass.newInstance();
+
+        setContentView(layout.getLayout());
+
+        Map<String, Integer> widgetMap = layout.getWidgets();
+
+        for (String property : propertyMap.keySet()) {
+            String extendedProperty = prefix2uriMap.get(property.split(":")[0]) + property.split(":")[1];
+            if (predicateMap.keySet().contains(extendedProperty)) {
+                Widget widget = propertyMap.get(property);
+                String id = widget.getId();
+                if(widgetMap.keySet().contains(id)) {
+                    List<Statement> statementList = predicateMap.get(extendedProperty);
+                    for (Statement statement : statementList) {
+                        // Mirar los literales con varios idiomas y eso weis
+                        String object = statement.getObject().stringValue().replaceAll("\\u0000", "");
+
+                        // Aquí hay que mirar las condiciones de tipo y eso
+                        int viewID = widgetMap.get(id);
+                        Object view = findViewById(viewID);
+
+                        setView(object, view, null, widget);
+
+
+                    }
+                }
+            }
+        }
+
+        clearLayouts(widgetMap);
+
+    }
+
+    private Map<String, Widget> getPropertyMap(Node pageNode) {
+        Map<String, Widget> propertyMap = new HashMap<String, Widget>();
+
+        NodeList pageNodeChildren = pageNode.getChildNodes();
+        for (int i = 0; i < pageNodeChildren.getLength(); i++) {
+            Node node = pageNodeChildren.item(i);
+            if (node.getNodeName().equals("items")) {
+                NodeList childNodes = node.getChildNodes();
+                for (int j = 0; j < childNodes.getLength(); j++) {
+                    Node itemNode = childNodes.item(j);
+                    NodeList itemNodeChildren = itemNode.getChildNodes();
+                    if (itemNode.getNodeName().equals("item")) {
+
+                        String property = "";
+                        String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();
+                        boolean linkable = false;
+                        if (itemNode.getAttributes().getNamedItem("linkable") != null) {
+                            linkable = Boolean.valueOf(itemNode.getAttributes().getNamedItem("linkable").getNodeValue());
+                        }
+
+                        boolean main = false;
+                        if (itemNode.getAttributes().getNamedItem("main") != null) {
+                            main = Boolean.valueOf(itemNode.getAttributes().getNamedItem("main").getNodeValue());
+                        }
+
+                        Widget widget = new Widget(id, linkable, main);
+                        for (int k = 0; k < itemNodeChildren.getLength(); k++) {
+                            Node element = itemNodeChildren.item(k);
+                            if (element.getNodeName().equals("property")) {
+                                property = element.getFirstChild().getNodeValue();
+                            }
+                            if (!"".equals(property) && !"".equals(id)) {
+                                propertyMap.put(property, widget);
+                            }
+
+                        }
+                    }
+
+                }
+            }
+        }
+        return propertyMap;
+    }
+
+    private Map<String, List<Statement>> getPredicateMap(Collection<Statement> statementCollection, List<String> typeList) {
+        Map<String, List<Statement>> predicateMap = new HashMap<String, List<Statement>>();
+        for (Statement statement : statementCollection) {
+            String predicate = statement.getPredicate().stringValue().replaceAll("\\u0000", "");
+            if (predicate.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+                typeList.add(statement.getObject().stringValue().replaceAll("\\u0000", ""));
+            } else {
+                List<Statement> statementList = new ArrayList<Statement>();
+                if (predicateMap.keySet().contains(predicate)) {
+                    statementList = predicateMap.get(predicate);
+                }
+                statementList.add(statement);
+                predicateMap.put(predicate, statementList);
+            }
+        }
+        return predicateMap;
+    }
+
+    private Collection<Statement> getStatements(String URI) throws IOException, RDFParseException, RDFHandlerException {
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        String lang = settings.getString("lang", "es");
+
+        HttpClient client = new DefaultHttpClient();
+        HttpGet request = new HttpGet(URI);
+        request.addHeader("Accept", "application/rdf+xml");
+
+        HttpResponse response = client.execute(request);
+        InputStream inputStream = response.getEntity().getContent();
+
+        StatementCollector statementCollector = new StatementCollector();
+        RDFParser rdfParser = new RDFXMLParser();
+        rdfParser.setRDFHandler(statementCollector);
+        rdfParser.parse(inputStream, "http://linkedqr/");
+
+        return statementCollector.getStatements();
+    }
+
     private void setView(final String object, Object view, Object originalView, Widget widget) {
         if (view instanceof TextView) {
             TextView textView = (TextView) view;
@@ -400,22 +396,37 @@ public class QrActivity extends LinkedQRActivity {
                 TextView originalTextView = (TextView) originalView;
                 template = originalTextView.getText().toString();
             }
-            String text = String.format(template, object);
-            textView.setText(text);
-
+            String text = "";
             if (widget.isLinkable()) {
 
-                textView.setOnClickListener( new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(getApplicationContext(), QrActivity.class);
-                        intent.putExtra("getBoolean", false);
-                        intent.putExtra("URI", object);
+                List<Statement> main = getMain(object);
 
-                        startActivity(intent);
-                    }
-                });
+                try {
+                    Statement statement = main.get(0);
+                    text = String.format(template, statement.getObject().stringValue().replaceAll("\\u0000", ""));
+
+                    textView.setOnClickListener( new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intent = new Intent(getApplicationContext(), QrActivity.class);
+                            intent.putExtra("getBoolean", false);
+                            intent.putExtra("URI", object);
+
+                            startActivity(intent);
+                        }
+                    });
+                } catch (NullPointerException e) {
+                    text = String.format(template, object);
+                }
+
+
+            } else {
+                text = String.format(template, object);
             }
+
+            textView.setText(text);
+
+
 
         } else if (view instanceof ViewGroup) {
             ViewGroup layoutView = (ViewGroup) view;
@@ -424,12 +435,12 @@ public class QrActivity extends LinkedQRActivity {
             try {
                 String childClassStr = child.getClass().getCanonicalName();
                 System.out.println(childClassStr);
-                Class childClass = Class.forName(child != null ? child.getClass().getCanonicalName() : null);
-                //childCopy = (TextView) childClass.newInstance();
+                Class<View> childClass = (Class<View>) Class.forName(child != null ? child.getClass().getCanonicalName() : null);
+
                 Class[] constructorArgs = new Class[1];
                 constructorArgs[0] = Context.class;
-                Constructor constructor = childClass.getDeclaredConstructor(constructorArgs);
-                childCopy = (View) constructor.newInstance(this);
+                Constructor<View> constructor = childClass.getDeclaredConstructor(constructorArgs);
+                childCopy = constructor.newInstance(this);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (NoSuchMethodException e) {
@@ -449,7 +460,6 @@ public class QrActivity extends LinkedQRActivity {
 
         } else if (view instanceof ImageView) {
             ImageView imageView = (ImageView) view;
-            //imageView.setImageURI(Uri.parse(object));
             try {
                 imageView.setImageBitmap(BitmapFactory.decodeStream(new URL(object).openConnection().getInputStream()));
             } catch (IOException e) {
@@ -470,6 +480,134 @@ public class QrActivity extends LinkedQRActivity {
             }
             return prefixURI;
         }
+    }
+
+    private List<Statement> getMain(String URI){
+        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder;
+        try {
+
+            docBuilder = docBuilderFactory.newDocumentBuilder();
+            Document doc = docBuilder.parse(getResources().openRawResource(R.raw.template));
+
+            NodeList prefixesList = doc.getElementsByTagName("prefixes");
+            Node prefixes = prefixesList.item(0);
+
+            Map<String, String> uri2prefixMap = new HashMap<String, String>();
+            Map<String, String> prefix2uriMap = new HashMap<String, String>();
+            prefix2uriMap.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+            uri2prefixMap.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
+
+            NodeList prefixesChildren = prefixes.getChildNodes();
+
+            for(int i = 0; i < prefixesChildren.getLength(); i++) {
+                Node prefixItem = prefixesChildren.item(i);
+                if (prefixItem.getNodeName().equals("prefixItem")) {
+                    NodeList prefixChildren = prefixItem.getChildNodes();
+                    String prefix = "";
+                    String uri = "";
+                    for(int j = 0; j < prefixChildren.getLength(); j++) {
+                        if (prefixChildren.item(j).getNodeName().equals("prefix")) {
+                            prefix = prefixChildren.item(j).getFirstChild().getNodeValue();
+                        } else if (prefixChildren.item(j).getNodeName().equals("uri")) {
+                            uri = prefixChildren.item(j).getFirstChild().getNodeValue();
+                        }
+                    }
+                    prefix2uriMap.put(prefix, uri);
+                    uri2prefixMap.put(uri, prefix);
+                }
+            }
+
+            Collection<Statement> statementCollection = getStatements(URI);
+
+            List<String> typeList = new ArrayList<String>();
+
+            Map<String, List<Statement>> predicateMap = getPredicateMap(statementCollection, typeList);
+
+            List<String> prefixedTypeList = new ArrayList<String>();
+
+            for (String type : typeList) {
+
+                prefixedTypeList.add(String.format("%s:%s", uri2prefixMap.get(getPrefix(type)), type.split(getPrefix(type))[1]));
+            }
+
+            NodeList pageItemList = doc.getElementsByTagName("pageItem");
+
+            Node pageNode = null;
+            for (int i = 0; i < pageItemList.getLength(); i++) {
+                Node node = pageItemList.item(i);
+                if (node.getNodeName().equals("pageItem")) {
+                    Element element = (Element) node;
+                    String classAttribute = element.getAttribute("type");
+                    if (prefixedTypeList.contains(classAttribute)) {
+                        pageNode = node;
+                    }
+                }
+            }
+
+            //Map<String, Widget> propertyMap = getPropertyMap(pageNode);
+
+            Map<String, Widget> propertyMap = new HashMap<String, Widget>();
+
+            NodeList pageNodeChildren = pageNode.getChildNodes();
+            for (int i = 0; i < pageNodeChildren.getLength(); i++) {
+                Node node = pageNodeChildren.item(i);
+                if (node.getNodeName().equals("items")) {
+                    NodeList childNodes = node.getChildNodes();
+                    for (int j = 0; j < childNodes.getLength(); j++) {
+                        Node itemNode = childNodes.item(j);
+                        NodeList itemNodeChildren = itemNode.getChildNodes();
+                        if (itemNode.getNodeName().equals("item")) {
+
+                            String property = "";
+                            String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();
+                            boolean linkable = false;
+                            if (itemNode.getAttributes().getNamedItem("linkable") != null) {
+                                linkable = Boolean.valueOf(itemNode.getAttributes().getNamedItem("linkable").getNodeValue());
+                            }
+
+                            boolean main = false;
+                            if (itemNode.getAttributes().getNamedItem("main") != null) {
+                                main = Boolean.valueOf(itemNode.getAttributes().getNamedItem("main").getNodeValue());
+
+                            }
+
+                            Widget widget = new Widget(id, linkable, main);
+                            for (int k = 0; k < itemNodeChildren.getLength(); k++) {
+                                Node element = itemNodeChildren.item(k);
+                                if (element.getNodeName().equals("property")) {
+                                    property = element.getFirstChild().getNodeValue();
+                                }
+                                if (!"".equals(property) && !"".equals(id)) {
+                                    propertyMap.put(property, widget);
+                                    if (widget.isMain()) {
+                                        String extendedProperty = prefix2uriMap.get(property.split(":")[0]) + property.split(":")[1];
+                                        return predicateMap.get(extendedProperty);
+                                    }
+                                }
+
+                            }
+                        }
+
+                    }
+                }
+            }
+
+        } catch (ParserConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (SAXException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (RDFHandlerException e) {
+            e.printStackTrace();
+        } catch (RDFParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

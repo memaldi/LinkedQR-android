@@ -43,6 +43,22 @@
                         android:text="Name: %s"
                         android:id="@+id/workmate_item" android:layout_gravity="center" android:clickable="true"/>
             </LinearLayout>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Social Networks"
+                    android:id="@+id/textView3" android:layout_gravity="center"/>
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent" android:id="@+id/social">
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="%s"
+                        android:id="@+id/textView2" android:layout_gravity="center"/>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -9,6 +9,14 @@
 	        <prefix>rel</prefix>
 	        <uri>http://purl.org/vocab/relationship/</uri>
 	    </prefixItem>
+        <prefixItem>
+            <prefix>rdf</prefix>
+            <uri>http://www.w3.org/2000/01/rdf-schema#</uri>
+        </prefixItem>
+        <prefixItem>
+            <prefix>sioc</prefix>
+            <uri>http://rdfs.org/sioc/ns#</uri>
+        </prefixItem>
 	</prefixes>
 	<pageItem type="foaf:Person" class="eu.deustotech.internet.linkedqr.android.layout.Person">
 	    <items>
@@ -24,6 +32,9 @@
 		    <item id="workmates" linkable="true">
 		        <property>rel:worksWith</property>
 		    </item>
+            <item id="social">
+                <property>foaf:account</property>
+            </item>
 	    </items>
 	</pageItem>
 </template>

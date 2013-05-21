@@ -9,10 +9,8 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class HomeActivity extends LinkedQRActivity {
-	public static final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-	public static final int QR_REQUEST_CODE = 14567;
-	public static final String PREFS_NAME = "LanguagePreferences";
-	public static final String PREFS = "Settings_Perfil";
+    public static final int QR_REQUEST_CODE = 14567;
+    public static final String PREFS = "Settings_Perfil";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +43,7 @@ public class HomeActivity extends LinkedQRActivity {
             intent.putExtra("getBarcode", true);
 
 			startActivityForResult(intent,
-					QR_REQUEST_CODE);
+                    QR_REQUEST_CODE);
 
 	}
 

@@ -22,6 +22,7 @@ public class Person implements Layout {
         widgetMap.put("email", R.id.email);
         widgetMap.put("workmates", R.id.workmates);
         widgetMap.put("depiction", R.id.depiction);
+        widgetMap.put("social", R.id.social);
 
         return widgetMap;
     }
