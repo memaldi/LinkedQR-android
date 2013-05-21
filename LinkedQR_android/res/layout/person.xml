@@ -28,6 +28,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Name: %s"
-                android:id="@+id/workmate_item" android:layout_gravity="center"/>
+                android:id="@+id/workmate_item" android:layout_gravity="center" android:clickable="true"/>
     </LinearLayout>
 </LinearLayout>

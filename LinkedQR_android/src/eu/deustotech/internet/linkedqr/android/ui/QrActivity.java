@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import eu.deustotech.internet.linkedqr.android.R;
 import eu.deustotech.internet.linkedqr.android.layout.Layout;
+import eu.deustotech.internet.linkedqr.android.model.Widget;
 import eu.deustotech.internet.linkedqr.android.util.QRUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -68,8 +69,11 @@ public class QrActivity extends LinkedQRActivity {
 		
 		// TODO: Esto hay que hacerlo mas eficiente
 		//this.excludedProperties = fillExcludedProperties();
-		
-		getBarcodeScanner();
+        if (getIntent().getBooleanExtra("getBarcode", false)) {
+		    getBarcodeScanner();
+        } else {
+            applyTemplate(getIntent().getStringExtra("URI"),null);
+        }
 
 	}
 	
@@ -268,7 +272,7 @@ public class QrActivity extends LinkedQRActivity {
 
 
 
-            Map<String, String> propertyMap = new HashMap<String, String>();
+            Map<String, Widget> propertyMap = new HashMap<String, Widget>();
             //Map<String, String> propertyLangMap = new HashMap<String, String>();
 
             NodeList pageNodeChildren = pageNode.getChildNodes();
@@ -283,20 +287,29 @@ public class QrActivity extends LinkedQRActivity {
 
                             //String langName = "";
                             String property = "";
-                            String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();;
+                            String id = itemNode.getAttributes().getNamedItem("id").getNodeValue();
+                            boolean linkable = false;
+                            if (itemNode.getAttributes().getNamedItem("linkable") != null) {
+                                linkable = Boolean.valueOf(itemNode.getAttributes().getNamedItem("linkable").getNodeValue());
+                            }
+
+                            boolean main = false;
+                            if (itemNode.getAttributes().getNamedItem("main") != null) {
+                                main = Boolean.valueOf(itemNode.getAttributes().getNamedItem("main").getNodeValue());
+                            }
+
+                            Widget widget = new Widget(id, linkable, main);
                             for (int k = 0; k < itemNodeChildren.getLength(); k++) {
                                 Node element = itemNodeChildren.item(k);
                                 if (element.getNodeName().equals("property")) {
                                     property = element.getFirstChild().getNodeValue();
                                 }
                                 if (!"".equals(property) && !"".equals(id)) {
-                                    propertyMap.put(property, id);
+                                    propertyMap.put(property, widget);
                                     //propertyLangMap.put(id, langName);
                                 }
 
                             }
-                        } else if (itemNode.getNodeName().equals("separator")) {
-                            //TODO: Separators
                         }
 
                     }
@@ -313,7 +326,8 @@ public class QrActivity extends LinkedQRActivity {
             for (String property : propertyMap.keySet()) {
                 String extendedProperty = prefix2uriMap.get(property.split(":")[0]) + property.split(":")[1];
                 if (predicateMap.keySet().contains(extendedProperty)) {
-                    String id = propertyMap.get(property);
+                    Widget widget = propertyMap.get(property);
+                    String id = widget.getId();
                     if(widgetMap.keySet().contains(id)) {
                         List<Statement> statementList = predicateMap.get(extendedProperty);
                         for (Statement statement : statementList) {
@@ -325,7 +339,9 @@ public class QrActivity extends LinkedQRActivity {
                             int viewID = widgetMap.get(id);
                             Object view = findViewById(viewID);
 
-                            setView(object, view, null);
+                            setView(object, view, null, widget);
+
+
                         }
                     }
 
@@ -367,7 +383,7 @@ public class QrActivity extends LinkedQRActivity {
 
     }
 
-    private void setView(String object, Object view, Object originalView) {
+    private void setView(final String object, Object view, Object originalView, Widget widget) {
         if (view instanceof TextView) {
             TextView textView = (TextView) view;
             String template = "";
@@ -379,6 +395,21 @@ public class QrActivity extends LinkedQRActivity {
             }
             String text = String.format(template, object);
             textView.setText(text);
+
+            if (widget.isLinkable()) {
+
+                textView.setOnClickListener( new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(getApplicationContext(), QrActivity.class);
+                        intent.putExtra("getBoolean", false);
+                        intent.putExtra("URI", object);
+
+                        startActivity(intent);
+                    }
+                });
+            }
+
         } else if (view instanceof ViewGroup) {
             ViewGroup layoutView = (ViewGroup) view;
             View child = layoutView.getChildAt(0);
@@ -403,7 +434,7 @@ public class QrActivity extends LinkedQRActivity {
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
-            setView(object, childCopy, child);
+            setView(object, childCopy, child, widget);
             childCopy.setVisibility(View.VISIBLE);
             childCopy.setLayoutParams(new ViewGroup.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)));
             layoutView.addView(childCopy);

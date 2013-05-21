@@ -12,13 +12,12 @@
 	</prefixes>
 	<pageItem type="foaf:Person" class="eu.deustotech.internet.linkedqr.android.layout.Person">
 	    <items>
-		    <item id="name">
+		    <item id="name" main="true">
 		        <property>foaf:name</property>
 		    </item>
 		    <item id="email">
 		        <property>foaf:mbox</property>
 		    </item>
-		    <separator/>
 		    <item id="workmates" linkable="true">
 		        <property>rel:worksWith</property>
 		    </item>

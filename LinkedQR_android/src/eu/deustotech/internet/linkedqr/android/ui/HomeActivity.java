@@ -41,8 +41,10 @@ public class HomeActivity extends LinkedQRActivity {
 
 	/** Handle "qr" action. */
 	public void onQrClick(View v) {
-		
-			startActivityForResult(new Intent(this, QrActivity.class),
+		    Intent intent = new Intent(this, QrActivity.class);
+            intent.putExtra("getBarcode", true);
+
+			startActivityForResult(intent,
 					QR_REQUEST_CODE);
 
 	}
