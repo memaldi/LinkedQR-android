@@ -9,49 +9,6 @@
         android:targetSdkVersion="8" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-	
-    <application
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:name="LinkedQR" >
-        <activity
-            android:label="@string/title_perfil"
-            android:name="eu.deustotech.internet.linkedqr.android.ui.HomeActivity"
-            android:screenOrientation="nosensor"
-            android:theme="@style/Theme.IOSched" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-        <activity
-            android:configChanges="locale"
-            android:label="@string/title_idioma"
-            android:name="eu.deustotech.internet.linkedqr.android.ui.LanguageActivity"
-            android:screenOrientation="nosensor"
-            android:theme="@style/Theme.IOSched" >
-        </activity>
-        <activity
-            android:configChanges="orientation|keyboardHidden"
-            android:label="@string/title_qr"
-            android:name="eu.deustotech.internet.linkedqr.android.ui.QrActivity"
-            android:screenOrientation="nosensor"
-            android:theme="@style/Theme.IOSched" />
-
-        <meta-data
-            android:name="android.app.default_searchable"
-            android:value="eu.deustotech.internet.linkedqr.android.ui.SearchActivity" />
-        <activity
-            android:name="eu.deustotech.internet.linkedqr.android.ui.LinkedDataActivity" 
-            android:theme="@style/Theme.IOSched" 
-            android:screenOrientation="nosensor">
-        </activity>
-    </application>
-
-    
 
 
 </manifest>

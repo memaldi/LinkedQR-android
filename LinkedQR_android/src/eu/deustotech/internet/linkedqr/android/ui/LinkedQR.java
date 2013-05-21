@@ -1,24 +1,17 @@
 package eu.deustotech.internet.linkedqr.android.ui;
 
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import eu.deustotech.internet.linkedqr.android.R;
 import eu.deustotech.internet.linkedqr.android.layout.Layout;
 import eu.deustotech.internet.linkedqr.android.model.Widget;
-import eu.deustotech.internet.linkedqr.android.util.QRUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -44,134 +37,32 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
-import java.util.logging.Logger;
 
 
 /**
  * @author mikel
  * 
  */
-public class QrActivity extends LinkedQRActivity {
+public class LinkedQR {
 
-	private static final String BS_PACKAGE = "com.google.zxing.client.android";
-	private static final int QR_CODE_REQUEST_CODE = 5678;
-	private static final int MARKET_REQUEST_CODE = 4932;
+    private Context context;
+    private Activity activity;
+    private  InputStream inputStream;
 
-    private static final String PREFS_NAME = "LanguagePreferences";
-	/**
-	 * The creation of QrActivity
-	 */
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		//setContentView(R.layout.qr);
+    public LinkedQR(Context context, Activity activity, InputStream inputStream) {
+        this.context = context;
+        this.activity = activity;
+        this.inputStream = inputStream;
+    }
 
-		SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-		settings.getString("lang", "es");
-		
-		// TODO: Esto hay que hacerlo mas eficiente
-		//this.excludedProperties = fillExcludedProperties();
-        if (getIntent().getBooleanExtra("getBarcode", false)) {
-		    getBarcodeScanner();
-        } else {
-            applyTemplate(getIntent().getStringExtra("URI"));
-        }
-
-	}
-	
-	/**
-	 * Launches the Barcode Scanner. If the user has not the Barcode Scanner
-	 * instaled, the app launches the Android Market to download it.
-	 */
-	private void getBarcodeScanner() {
-		try {
-			PackageInfo pi = QRUtils.searchPackageByURI(BS_PACKAGE, this);
-			Logger.getLogger("QrActivity").info(pi.toString());
-			Intent bsIntent = new Intent(BS_PACKAGE + ".SCAN");
-			bsIntent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-			startActivityForResult(bsIntent, QR_CODE_REQUEST_CODE);
-		} catch (NameNotFoundException e) {
-			final AlertDialog bsAlertDialog = new AlertDialog.Builder(this).create();
-			bsAlertDialog.setTitle(R.string.bs_popup_title);
-			bsAlertDialog.setMessage(getString(R.string.bs_popup_message));
-			bsAlertDialog.setButton(AlertDialog.BUTTON_POSITIVE,
-					getString(R.string.bs_OK_button),
-					new DialogInterface.OnClickListener() {
-
-						public void onClick(DialogInterface dialog, int which) {
-							Uri bsMarket = Uri.parse("market://details?id="
-									+ BS_PACKAGE);
-							Intent marketIntent = new Intent(
-									Intent.ACTION_VIEW, bsMarket);
-							bsAlertDialog.cancel();
-							startActivityForResult(marketIntent,
-									MARKET_REQUEST_CODE);
-						}
-
-					});
-			bsAlertDialog.setButton(AlertDialog.BUTTON_NEGATIVE,
-					getString(R.string.bs_CANCEL_button),
-					new DialogInterface.OnClickListener() {
-
-						public void onClick(DialogInterface dialog, int which) {
-							//TODO: Cambiar
-							//UIUtils.goHome(QrActivity.this);
-
-						}
-					});
-			bsAlertDialog.setIcon(R.drawable.ic_launcher);
-			bsAlertDialog.show();
-		}
-	}
-
-	/**
-	 * * Evaluates the returns of external activities like Barcode Scanner or
-	 * Android Market
-	 * 
-	 * @param requestCode
-	 *            The request code assigned to the requested intent
-	 * @param resultCode
-	 *            The code with the result of the execution of the intent
-	 * @param data
-	 *            The data returned by the intent
-	 */
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-		if (requestCode == MARKET_REQUEST_CODE) {
-			getBarcodeScanner();
-		} else if (requestCode == QR_CODE_REQUEST_CODE) {
-			if (resultCode == RESULT_OK) {
-
-                String QRURI = data.getStringExtra("SCAN_RESULT");
-					
-					try {
-
-						applyTemplate(QRURI);
-					} catch (Exception e) {
-						e.printStackTrace();
-						
-						Context context = getApplicationContext();
-						int duration = Toast.LENGTH_LONG;
-						Toast toast = Toast.makeText(context, R.string.qr_error, duration);
-						toast.show();
-						//TODO: cambiar
-						//UIUtils.goHome(this);
-					}
-			} else {
-				//TODO: cambiar
-				//UIUtils.goHome(this);
-			}
-		}
-	}
-	
-	private void applyTemplate(String URI) {
+	public void applyTemplate(String URI) {
 		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder;
 		try {
 
 			docBuilder = docBuilderFactory.newDocumentBuilder();
-			Document doc = docBuilder.parse(getResources().openRawResource(R.raw.template));
+
+			Document doc = docBuilder.parse(this.inputStream);
 			
 			NodeList prefixesList = doc.getElementsByTagName("prefixes");
             Node prefixes = prefixesList.item(0);
@@ -232,7 +123,7 @@ public class QrActivity extends LinkedQRActivity {
 
             Map<String, Widget> propertyMap = getPropertyMap(pageNode);
 
-           setLayout(prefix2uriMap, predicateMap, className, propertyMap);
+            setLayout(prefix2uriMap, predicateMap, className, propertyMap);
 
 
 
@@ -262,7 +153,7 @@ public class QrActivity extends LinkedQRActivity {
     private void clearLayouts(Map<String, Integer> widgetMap) {
         for (String key : widgetMap.keySet()) {
             Integer widgetID = widgetMap.get(key);
-            View view = findViewById(widgetID);
+            View view = this.activity.findViewById(widgetID);
             if (ViewGroup.class.isAssignableFrom(view.getClass())) {
                 ViewGroup viewGroup = (ViewGroup) view;
                 viewGroup.removeView(viewGroup.getChildAt(0));
@@ -274,7 +165,7 @@ public class QrActivity extends LinkedQRActivity {
         Class<Layout> layoutClass = (Class<Layout>) Class.forName(className);
         Layout layout = layoutClass.newInstance();
 
-        setContentView(layout.getLayout());
+        this.activity.setContentView(layout.getLayout());
 
         Map<String, Integer> widgetMap = layout.getWidgets();
 
@@ -291,7 +182,7 @@ public class QrActivity extends LinkedQRActivity {
 
                         // Aquí hay que mirar las condiciones de tipo y eso
                         int viewID = widgetMap.get(id);
-                        Object view = findViewById(viewID);
+                        Object view = this.activity.findViewById(viewID);
 
                         setView(object, view, null, widget);
 
@@ -368,8 +259,8 @@ public class QrActivity extends LinkedQRActivity {
     }
 
     private Collection<Statement> getStatements(String URI) throws IOException, RDFParseException, RDFHandlerException {
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        String lang = settings.getString("lang", "es");
+        //SharedPreferences settings = this.acgetSharedPreferences(PREFS_NAME, 0);
+        //String lang = settings.getString("lang", "es");
 
         HttpClient client = new DefaultHttpClient();
         HttpGet request = new HttpGet(URI);
@@ -399,7 +290,7 @@ public class QrActivity extends LinkedQRActivity {
             String text = "";
             if (widget.isLinkable()) {
 
-                List<Statement> main = getMain(object);
+                List<Statement> main = getMain(object, this.inputStream);
 
                 try {
                     Statement statement = main.get(0);
@@ -408,11 +299,11 @@ public class QrActivity extends LinkedQRActivity {
                     textView.setOnClickListener( new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            Intent intent = new Intent(getApplicationContext(), QrActivity.class);
+                            Intent intent = new Intent(context.getApplicationContext(), LinkedQR.class);
                             intent.putExtra("getBoolean", false);
                             intent.putExtra("URI", object);
 
-                            startActivity(intent);
+                            activity.startActivity(intent);
                         }
                     });
                 } catch (NullPointerException e) {
@@ -482,13 +373,13 @@ public class QrActivity extends LinkedQRActivity {
         }
     }
 
-    private List<Statement> getMain(String URI){
+    private List<Statement> getMain(String URI, InputStream inputStream){
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder;
         try {
 
             docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document doc = docBuilder.parse(getResources().openRawResource(R.raw.template));
+            Document doc = docBuilder.parse(inputStream);
 
             NodeList prefixesList = doc.getElementsByTagName("prefixes");
             Node prefixes = prefixesList.item(0);

@@ -87,7 +87,7 @@ public class QRUtils {
 		try {
 			PackageInfo pi = pm.getPackageInfo(packageURI,
 					PackageManager.GET_ACTIVITIES);
-			Logger.getLogger("QrActivity").info(pi.toString());
+			Logger.getLogger("LinkedQR").info(pi.toString());
 			return pi;
 		} catch (NameNotFoundException e) {
 			// TODO Auto-generated catch block
