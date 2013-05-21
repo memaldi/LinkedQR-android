@@ -12,6 +12,9 @@
 	</prefixes>
 	<pageItem type="foaf:Person" class="eu.deustotech.internet.linkedqr.android.layout.Person">
 	    <items>
+            <item id="depiction">
+                <property>foaf:depiction</property>
+            </item>
 		    <item id="name" main="true">
 		        <property>foaf:name</property>
 		    </item>

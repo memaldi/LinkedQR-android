@@ -7,10 +7,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import eu.deustotech.internet.linkedqr.android.R;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -225,13 +228,13 @@ public class QrActivity extends LinkedQRActivity {
 
             Collection<Statement> statementCollection = statementCollector.getStatements();
 
-            String type = "";
+            List<String> typeList = new ArrayList<String>();
 
             Map<String, List<Statement>> predicateMap = new HashMap<String, List<Statement>>();
             for (Statement statement : statementCollection) {
                 String predicate = statement.getPredicate().stringValue().replaceAll("\\u0000", "");
                 if (predicate.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
-                    type = statement.getObject().stringValue().replaceAll("\\u0000", "");
+                    typeList.add(statement.getObject().stringValue().replaceAll("\\u0000", ""));
                 } else {
                     List<Statement> statementList = new ArrayList<Statement>();
                     if (predicateMap.keySet().contains(predicate)) {
@@ -252,7 +255,12 @@ public class QrActivity extends LinkedQRActivity {
                 }
             }*/
 
-            String prefixedType = String.format("%s:%s", uri2prefixMap.get(getPrefix(type)), type.split(getPrefix(type))[1]);
+            List<String> prefixedTypeList = new ArrayList<String>();
+
+            for (String type : typeList) {
+
+                prefixedTypeList.add(String.format("%s:%s", uri2prefixMap.get(getPrefix(type)), type.split(getPrefix(type))[1]));
+            }
 
             NodeList pageItemList = doc.getElementsByTagName("pageItem");
 
@@ -263,7 +271,7 @@ public class QrActivity extends LinkedQRActivity {
                 if (node.getNodeName().equals("pageItem")) {
                     Element element = (Element) node;
                     String classAttribute = element.getAttribute("type");
-                    if (classAttribute.equals(prefixedType)) {
+                    if (prefixedTypeList.contains(classAttribute)) {
                         pageNode = node;
                         className = element.getAttribute("class");
                     }
@@ -344,7 +352,6 @@ public class QrActivity extends LinkedQRActivity {
 
                         }
                     }
-
                 }
             }
 
@@ -439,6 +446,15 @@ public class QrActivity extends LinkedQRActivity {
             childCopy.setLayoutParams(new ViewGroup.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)));
             layoutView.addView(childCopy);
 
+
+        } else if (view instanceof ImageView) {
+            ImageView imageView = (ImageView) view;
+            //imageView.setImageURI(Uri.parse(object));
+            try {
+                imageView.setImageBitmap(BitmapFactory.decodeStream(new URL(object).openConnection().getInputStream()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         }
     }
